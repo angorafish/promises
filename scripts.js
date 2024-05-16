@@ -1,71 +1,94 @@
-document.addEventListener('DOMContentLoaded', async function() {
+document.addEventListener('DOMContentLoaded', function() {
     const favoriteNumber = 7;
-    try {
-        const facts = await Promise.all(
-            Array.from({ length: 4 }, () => axios.get(`http://numbersapi.com/${favoriteNumber}?json`))
-        );
-        const factsContainer = document.getElementById('factsContainer');
+    const requests = Array.from({ length: 4 }, () =>
+        fetch(`http://numbersapi.com/${favoriteNumber}?json`)
+        .then(response => response.json())
+    );
+
+    Promise.all(requests)
+    .then(facts => {
+        const factsContainer = document.getElementById('numberFact');
         factsContainer.innerHTML = '';
         facts.forEach((fact, index) => {
             const factElement = document.createElement('p');
-            factElement.textContent = `Fact ${index + 1}: ${fact.data.text}`;
+            factElement.textContent = `Fact ${index + 1}: ${fact.text}`;
             factsContainer.appendChild(factElement);
         });
-    } catch (error) {
+    })
+    .catch(error => {
         console.error('Error fetching number facts:', error);
         document.getElementById('numberFact').textContent = 'Failed to load facts. Try again later.';
-    }
-
-    let deckId = null;
-
-    document.getElementById('drawCard').addEventListener('click', async () => {
-        if (!deckId) {
-            const response = await axios.get('https://deckofcardsapi.com/api/deck/new/shuffle/');
-            deckId = response.data.deck_id;
-        }
-        await drawCard(deckId);
     });
 
-    document.getElementById('drawTwoCards').addEventListener('click', async () => {
-        await drawTwoCardsFromSameDeck();
+// Fact 1: 7 is the number of suicides mentioned in the Bible.
+// Fact 2: 7 is the number of periods, or horizontal rows of elements, in the periodic table.
+// Fact 3: 7 is the number of colors of the rainbow.
+// Fact 4: 7 is the number of SI base units.
+
+    let deckId = null;
+    document.getElementById('drawCard').addEventListener('click', function() {
+        if (!deckId) {
+            fetch('https://deckofcardsapi.com/api/deck/new/shuffle/')
+                .then(response => response.json())
+                .then(data => {
+                    deckId = data.deck_id;
+                    drawCard(deckId);
+                });
+        } else {
+            drawCard(deckId);
+        }
+    });
+
+    document.getElementById('drawTwoCards').addEventListener('click', function() {
+        drawTwoCardsFromSameDeck();
     });
 });
 
-async function drawCard(deckId) {
-    try {
-        const response = await axios.get(`https://deckofcardsapi.com/api/deck/${deckId}/draw/?count=1`);
-        if (response.data.cards.length === 0) {
-            alert('No more cards in deck!');
-            return;
-        }
-        const card = response.data.cards[0];
-        document.getElementById('cardContainer').innerHTML = `<p>${card.value} of ${card.suit}</p>`;
-    } catch (err) {
-        console.error('Error drawing card:', err);
-        alert('Failed to draw a card.');
-    }
+function drawCard(deckId) {
+    fetch(`https://deckofcardsapi.com/api/deck/${deckId}/draw/?count=1`)
+        .then(response => response.json())
+        .then(data => {
+            if(data.cards.length === 0) {
+                alert('No more cards in deck!');
+                return;
+            }
+            const card = data.cards[0];
+            document.getElementById('cardContainer').innerHTML = `<p>${card.value} of ${card.suit}</p>`;
+        })
+        .catch(err => console.error('Error drawing card:', err));
 }
 
-async function drawTwoCardsFromSameDeck() {
-    try {
-        const firstDraw = await axios.get('https://deckofcardsapi.com/api/deck/new/draw/?count=1');
-        const firstCard = firstDraw.data.cards[0];
-        const deckId = firstDraw.data.deck_id;
-        const cardContainer = document.getElementById('cardContainer');
-        cardContainer.innerHTML = '';
-        cardContainer.appendChild(createCardElement(`First card: ${firstCard.value} of ${firstCard.suit}`));
+function drawTwoCardsFromSameDeck() {
+    const cardContainer = document.getElementById('cardContainer');
+    cardContainer.innerHTML = '';
+    fetch(`https://deckofcardsapi.com/api/deck/new/draw/?count=1`)
+        .then(response => response.json())
+        .then(firstDraw => {
+            if (firstDraw.cards.length === 0) {
+                alert('No more cards in deck!');
+                return;
+            }
+            const firstCard = firstDraw.cards[0];
+            const deckId = firstDraw.deck_id;
+            const firstCardElement = document.createElement('p');
+            firstCardElement.textContent = `First card: ${firstCard.value} of ${firstCard.suit}`;
+            document.getElementById('cardContainer').appendChild(firstCardElement);
 
-        const secondDraw = await axios.get(`https://deckofcardsapi.com/api/deck/${deckId}/draw/?count=1`);
-        const secondCard = secondDraw.data.cards[0];
-        cardContainer.appendChild(createCardElement(`Second card: ${secondCard.value} of ${secondCard.suit}`));
-    } catch (err) {
-        console.error('Error drawing cards:', err);
-        alert('Failed to draw cards.');
-    }
-}
-
-function createCardElement(text) {
-    const cardElement = document.createElement('p');
-    cardElement.textContent = text;
-    return cardElement;
+            return fetch(`https://deckofcardsapi.com/api/deck/${deckId}/draw/?count=1`);
+        })
+        .then(response => response.json())
+        .then(secondDraw => {
+            if (secondDraw.cards.length === 0) {
+                alert('No more cards in deck!');
+                return;
+            }
+            const secondCard = secondDraw.cards[0];
+            const secondCardElement = document.createElement('p');
+            secondCardElement.textContent = `Second card: ${secondCard.value} of ${secondCard.suit}`;
+            document.getElementById('cardContainer').appendChild(secondCardElement);
+        })
+        .catch(err => {
+            console.error('Error drawing cards', err);
+            alert('Failed to draw cards');
+        });
 }
