@@ -1,16 +1,46 @@
 body {
     font-family: Arial, sans-serif;
+    line-height: 1.6;
+    margin: 0;
+    padding: 0;
+    background: #f4f4f4;
+    color: #333;
+}
+
+h1 {
+    color: #333;
 }
 
 section {
-    margin-bottom: 20px;
+    background: white;
+    margin: 20px;
     padding: 20px;
     border: 1px solid #ccc;
     border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
-#cardContainer {
-    margin-top: 20px;
-    font-size: 24px;
-    color: #333;
+button {
+    background: #5c67f2;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    margin: 10px 0;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+button:hover {
+    background: #4a54e1;
+}
+
+#factsContainer, #cardContainer {
+    padding: 10px;
+    background: #e9e9e9;
+    border-radius: 5px;
+}
+
+#errorMessage {
+    color: red;
+    margin-top: 10px;
 }
